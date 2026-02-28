@@ -2,6 +2,7 @@ package org.sitenetsoft.quarkus.vdp;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -9,11 +10,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import jakarta.ws.rs.container.ContainerResponseContext;
-import jakarta.ws.rs.container.ResourceInfo;
 
 import org.jboss.resteasy.reactive.server.ServerResponseFilter;
+import org.jboss.resteasy.reactive.server.SimpleResourceInfo;
 
+@Singleton
 public class VdpResponseFilter {
 
     @Inject
@@ -22,7 +25,7 @@ public class VdpResponseFilter {
     private final ConcurrentHashMap<String, Map<String, Object>> descriptorCache = new ConcurrentHashMap<>();
 
     @ServerResponseFilter
-    public void filter(ContainerResponseContext responseContext, ResourceInfo resourceInfo)
+    public void filter(ContainerResponseContext responseContext, SimpleResourceInfo resourceInfo)
             throws IOException {
 
         VDP vdp = resolveAnnotation(resourceInfo);
@@ -66,12 +69,22 @@ public class VdpResponseFilter {
         }
     }
 
-    private VDP resolveAnnotation(ResourceInfo resourceInfo) {
-        VDP methodLevel = resourceInfo.getResourceMethod().getAnnotation(VDP.class);
-        if (methodLevel != null) {
-            return methodLevel;
+    private VDP resolveAnnotation(SimpleResourceInfo resourceInfo) {
+        // Try method-level first by scanning declared methods matching the name
+        Class<?> resourceClass = resourceInfo.getResourceClass();
+        String methodName = resourceInfo.getMethodName();
+
+        for (Method method : resourceClass.getDeclaredMethods()) {
+            if (method.getName().equals(methodName)) {
+                VDP methodLevel = method.getAnnotation(VDP.class);
+                if (methodLevel != null) {
+                    return methodLevel;
+                }
+            }
         }
-        return resourceInfo.getResourceClass().getAnnotation(VDP.class);
+
+        // Fall back to class-level
+        return resourceClass.getAnnotation(VDP.class);
     }
 
     private VDP.Transport resolveTransport(VDP vdp) {
