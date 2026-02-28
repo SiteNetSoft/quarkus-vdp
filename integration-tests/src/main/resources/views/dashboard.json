@@ -1,0 +1,16 @@
+{
+  "template": "https://example.com/templates/dashboard.html",
+  "slots": {
+    "header": {
+      "template": "https://example.com/templates/header.html"
+    },
+    "widgets": [
+      {
+        "template": "https://example.com/templates/stat-card.html"
+      },
+      {
+        "template": "https://example.com/templates/chart.html"
+      }
+    ]
+  }
+}
