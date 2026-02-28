@@ -1,0 +1,18 @@
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+        mavenLocal()
+    }
+    plugins {
+        id 'io.quarkus.extension' version "${quarkusPluginVersion}"
+        id 'io.quarkus' version "${quarkusPluginVersion}"
+    }
+}
+
+rootProject.name = 'quarkus-vdp-parent'
+
+include 'runtime', 'deployment', 'integration-tests'
+project(':runtime').name = 'quarkus-vdp'
+project(':deployment').name = 'quarkus-vdp-deployment'
+project(':integration-tests').name = 'quarkus-vdp-integration-tests'

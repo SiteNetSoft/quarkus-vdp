@@ -1,0 +1,17 @@
+plugins {
+    id 'io.quarkus.extension'
+}
+
+quarkusExtension {
+    deploymentModule = 'quarkus-vdp-deployment'
+}
+
+dependencies {
+    implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
+    implementation 'io.quarkus:quarkus-arc'
+    implementation 'io.quarkus:quarkus-rest'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+    annotationProcessor enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
+    annotationProcessor 'io.quarkus:quarkus-extension-processor'
+}
