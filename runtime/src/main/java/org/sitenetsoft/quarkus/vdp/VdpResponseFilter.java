@@ -19,6 +19,11 @@ import org.jboss.resteasy.reactive.server.SimpleResourceInfo;
 @Singleton
 public class VdpResponseFilter {
 
+    /** The VDP protocol version this extension implements and advertises (spec Sections 13.1, 15.1). */
+    public static final String VDP_VERSION = "0.2";
+
+    private static final String HEADER_VDP_VERSION = "VDP-Version";
+
     @Inject
     ObjectMapper objectMapper;
 
@@ -37,6 +42,10 @@ public class VdpResponseFilter {
         String descriptor = vdp.descriptor();
         VDP.Transport transport = resolveTransport(vdp);
 
+        // Spec Section 13.1: VDP-Version may ride on any response carrying a
+        // view descriptor; a server SHOULD advertise its support (Section 15.1).
+        responseContext.getHeaders().putSingle(HEADER_VDP_VERSION, VDP_VERSION);
+
         switch (transport) {
             case VIEW_TEMPLATE -> {
                 String url = !template.isEmpty() ? template : descriptor;
@@ -52,7 +61,7 @@ public class VdpResponseFilter {
                     return;
                 }
 
-                Object viewValue = buildViewValue(template, descriptor);
+                Object viewValue = buildViewValue(template, descriptor, vdp.transform());
 
                 @SuppressWarnings("unchecked")
                 Map<String, Object> entityMap = objectMapper.convertValue(entity, Map.class);
@@ -97,9 +106,19 @@ public class VdpResponseFilter {
         return VDP.Transport.VIEW_TEMPLATE;
     }
 
-    private Object buildViewValue(String template, String descriptor) throws IOException {
+    private Object buildViewValue(String template, String descriptor, String transform) throws IOException {
         if (!template.isEmpty()) {
-            return Map.of("template", template);
+            if (transform.isEmpty()) {
+                return Map.of("template", template);
+            }
+            // VDP 0.2 (spec Section 3.8): the transform travels on the
+            // descriptor node, adapting this representation to the template's
+            // model. Parsed here so a malformed literal fails fast at first
+            // use rather than shipping an invalid descriptor.
+            LinkedHashMap<String, Object> view = new LinkedHashMap<>();
+            view.put("template", template);
+            view.put("transform", objectMapper.readValue(transform, Object.class));
+            return view;
         }
         return loadDescriptor(descriptor);
     }

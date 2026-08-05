@@ -34,6 +34,14 @@ public class VdpResource {
     }
 
     @GET
+    @Path("/inline-transform")
+    @VDP(template = "https://example.com/templates/card.html", transport = Transport.INLINE,
+         transform = "{\"title\": \"/name\", \"amount\": {\"$get\": \"/price\", \"$default\": 0}}")
+    public Product getProductTransformed() {
+        return new Product("Widget", 9.99);
+    }
+
+    @GET
     @Path("/inline-descriptor")
     @VDP(descriptor = "/views/dashboard.json", transport = Transport.INLINE)
     public Dashboard getDashboardInline() {
